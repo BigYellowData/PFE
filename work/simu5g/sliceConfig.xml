@@ -1,0 +1,70 @@
+<!-- ============================================================
+     sliceConfig.xml
+     Configuration de l'allocation des Resource Blocks par slice
+     au niveau du gNodeB (scheduler MAC).
+
+     Total : 50 RBs (100 MHz en bande n78)
+
+     Répartition :
+       eMBB        : 25 RBs (50%) - besoin débit vidéo
+       URLLC       :  12 RBs (24%) - priorité latence
+       mMTC        :   5 RBs (10%) - faible volume
+       Best Effort :   8 RBs (16%) - résidu
+     ============================================================ -->
+<sliceConfig>
+    <slice id="1" name="eMBB" sst="1">
+        <resourceAllocation>
+            <minRbs>20</minRbs>
+            <maxRbs>35</maxRbs>
+            <defaultRbs>25</defaultRbs>
+            <priority>2</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>50</maxLatency>
+            <minThroughput>10</minThroughput>
+            <maxPacketLoss>0.01</maxPacketLoss>
+        </qos>
+    </slice>
+
+    <slice id="2" name="URLLC" sst="2">
+        <resourceAllocation>
+            <minRbs>8</minRbs>
+            <maxRbs>20</maxRbs>
+            <defaultRbs>12</defaultRbs>
+            <priority>1</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>10</maxLatency>
+            <minThroughput>0.1</minThroughput>
+            <maxPacketLoss>0.00001</maxPacketLoss>
+        </qos>
+    </slice>
+
+    <slice id="3" name="mMTC" sst="3">
+        <resourceAllocation>
+            <minRbs>3</minRbs>
+            <maxRbs>10</maxRbs>
+            <defaultRbs>5</defaultRbs>
+            <priority>3</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>100</maxLatency>
+            <minThroughput>0.01</minThroughput>
+            <maxPacketLoss>0.05</maxPacketLoss>
+        </qos>
+    </slice>
+
+    <slice id="4" name="BestEffort" sst="4">
+        <resourceAllocation>
+            <minRbs>2</minRbs>
+            <maxRbs>15</maxRbs>
+            <defaultRbs>8</defaultRbs>
+            <priority>4</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>100</maxLatency>
+            <minThroughput>1.0</minThroughput>
+            <maxPacketLoss>0.05</maxPacketLoss>
+        </qos>
+    </slice>
+</sliceConfig>

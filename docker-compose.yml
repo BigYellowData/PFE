@@ -1,0 +1,14 @@
+services:
+  spark:
+    image: jupyter/pyspark-notebook:latest
+    container_name: mon_spark_lab
+    ports:
+      - "8888:8888"   
+      - "4040:4040"   
+    volumes:
+      - ./work:/home/work
+      - ./data/5G_Traffic_Datasets:/home/data
+      - ./data/output:/home/output
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - SPARK_DRIVER_MEMORY=4g

@@ -1,0 +1,4 @@
+# Slice: BestEffort | 112.217.128.203:5001 -> 10.215.173.1:58460 (UDP)
+# offset_sec  packet_size_bytes
+0.000 979
+1.000 3260

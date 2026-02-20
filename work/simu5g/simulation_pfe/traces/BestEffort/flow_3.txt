@@ -1,0 +1,4 @@
+# Slice: BestEffort | 10.215.173.1: -> 112.217.128.197: (Pathport)
+# offset_sec  packet_size_bytes
+0.000 64
+4613.000 64

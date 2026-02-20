@@ -1,0 +1,4 @@
+# Slice: BestEffort | 112.217.128.201: -> 10.215.173.1: (THRIFT)
+# offset_sec  packet_size_bytes
+0.000 64
+2.000 64

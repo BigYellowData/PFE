@@ -1,0 +1,5 @@
+# Slice: BestEffort | 112.217.128.201: -> 10.215.173.1: (TCP)
+# offset_sec  packet_size_bytes
+0.000 107925
+1.000 808
+2.000 134

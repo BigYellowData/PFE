@@ -1,0 +1,4 @@
+# Slice: mMTC | 112.217.128.200:443 -> 10.215.173.1:36534 (TCP)
+# offset_sec  packet_size_bytes
+0.000 168
+3.000 80

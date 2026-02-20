@@ -1,0 +1,12 @@
+<config>
+    <!-- Configuration IP simplifiée pour Network Slicing simu5G -->
+
+    <!-- Assignation automatique des adresses -->
+    <interface hosts="**" address="10.x.x.x" netmask="255.x.x.x"/>
+
+    <!-- Routes statiques entre UEs et serveurs -->
+    <route hosts="ue*" destination="*" netmask="*" gateway="gnb" interface="cellular"/>
+
+    <!-- Multicast (requis par certains modules) -->
+    <multicast-group hosts="**" address="224.0.0.1"/>
+</config>
