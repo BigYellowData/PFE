@@ -1,4 +1,3 @@
-# Slice: mMTC | 112.217.128.200:443 -> 10.215.173.1:36534 (TCP)
-# offset_sec  packet_size_bytes
-0.000 168
-3.000 80
+version https://git-lfs.github.com/spec/v1
+oid sha256:5fbf3f09d2a6226691889e0f1ebdd32e37e6c7cf4e6c120305cf768787a8d412
+size 119

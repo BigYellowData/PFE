@@ -1,3 +1,3 @@
-# Slice: BestEffort | 10.215.173.1: -> 112.217.128.200: (THRIFT)
-# offset_sec  packet_size_bytes
-0.000 64
+version https://git-lfs.github.com/spec/v1
+oid sha256:bb7e3d737fe2a9c18a494213f68926d2b3adf3300d503e26651b64faddb0f649
+size 109

@@ -1,3 +1,3 @@
-# Slice: BestEffort | 10.215.173.1: -> 112.217.128.202: (DCP-PFT)
-# offset_sec  packet_size_bytes
-0.000 64
+version https://git-lfs.github.com/spec/v1
+oid sha256:9688cd3cefd9b6e97bbabe27149f01b4cb3e35862c989f7cf6b7d57b1187a92d
+size 110
