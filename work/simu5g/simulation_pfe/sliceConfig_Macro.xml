@@ -1,0 +1,66 @@
+<!-- ============================================================
+     sliceConfig_Macro.xml
+     Allocation RBs pour gNB_Macro (Urban Macro — 3GPP TR 38.901 UMa)
+
+     50 RBs totaux (100 MHz, bande n78 3.5 GHz, numerologie μ=1)
+     Répartition équilibrée : mix résidentiel + itinérant
+
+     Justification (3GPP TS 23.501 §5.7.12) :
+       eMBB  40% — couverture large, débit moyen, mix usage
+       URLLC 35% — VoLTE + contrôle, priorité haute (préemption)
+       mMTC  25% — IoT résidentiel, compteurs, faible débit
+     ============================================================ -->
+<sliceConfig>
+
+    <!-- eMBB — Enhanced Mobile Broadband (SST=1)
+         Usage macro : streaming HD, cloud gaming résidentiel
+         Priorité 2 (derrière URLLC) -->
+    <slice id="1" name="eMBB" sst="1">
+        <resourceAllocation>
+            <minRbs>14</minRbs>      <!-- minimum garanti -->
+            <maxRbs>36</maxRbs>      <!-- peut emprunter à mMTC -->
+            <defaultRbs>20</defaultRbs>  <!-- 40% de 50 RBs -->
+            <priority>2</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>50</maxLatency>          <!-- ms, 3GPP TS 23.501 -->
+            <minThroughput>10</minThroughput>    <!-- Mbps -->
+            <maxPacketLoss>0.01</maxPacketLoss>  <!-- 1% -->
+        </qos>
+    </slice>
+
+    <!-- URLLC — Ultra-Reliable Low-Latency (SST=2)
+         Usage macro : VoLTE, urgences, contrôle à distance
+         Priorité 1 (plus haute — préemption possible) -->
+    <slice id="2" name="URLLC" sst="2">
+        <resourceAllocation>
+            <minRbs>12</minRbs>
+            <maxRbs>24</maxRbs>
+            <defaultRbs>17</defaultRbs>  <!-- 35% de 50 RBs -->
+            <priority>1</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>20</maxLatency>           <!-- ms (end-to-end, overhead NR inclus) -->
+            <minThroughput>0.5</minThroughput>    <!-- Mbps -->
+            <maxPacketLoss>0.001</maxPacketLoss>  <!-- 0.001% = 99.999% fiabilité -->
+        </qos>
+    </slice>
+
+    <!-- mMTC — massive Machine-Type Communications (SST=3)
+         Usage macro : IoT résidentiel, compteurs eau/gaz/élec
+         Priorité 3 (peut céder des RBs en cas de besoin) -->
+    <slice id="3" name="mMTC" sst="3">
+        <resourceAllocation>
+            <minRbs>4</minRbs>
+            <maxRbs>18</maxRbs>
+            <defaultRbs>13</defaultRbs>  <!-- 25% de 50 RBs -->
+            <priority>3</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>8.8</maxLatency>          <!-- ms IoT industriel sub-9ms -->
+            <minThroughput>0.0003</minThroughput> <!-- Mbps (47B/5s réaliste) -->
+            <maxPacketLoss>0.01</maxPacketLoss>   <!-- 1% -->
+        </qos>
+    </slice>
+
+</sliceConfig>

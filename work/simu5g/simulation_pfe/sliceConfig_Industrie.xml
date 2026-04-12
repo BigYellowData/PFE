@@ -1,0 +1,74 @@
+<!-- ============================================================
+     sliceConfig_Industrie.xml
+     Allocation RBs pour gNB_Industrie (UMi Indoor — réseau privé 5G)
+
+     25 RBs totaux (50 MHz, bande n78 3.5 GHz, numerologie μ=1)
+     Répartition URLLC+mMTC-dominante : campus industriel (Industry 4.0)
+
+     Justification (3GPP TS 22.261 §6.22 — Industry 4.0 verticals) :
+       URLLC 48% — automates, AGV, cobots, contrôle en boucle fermée
+       mMTC  28% — capteurs IoT, SCADA, monitoring environnemental
+       eMBB  24% — supervision vidéo HD, interfaces opérateur
+
+     Pourquoi réseau privé ?
+       Isolation totale du trafic industriel critique (3GPP TS 23.501 §5.33 LADN)
+       SLA URLLC garanti sans contention avec trafic public
+       Réf: ETSI TR 103 300-3 (Industrial IoT 5G)
+     ============================================================ -->
+<sliceConfig>
+
+    <!-- URLLC — dominant en milieu industriel
+         Automates industriels (PLC), AGV (Automated Guided Vehicles),
+         cobots collaboratifs, contrôle boucle fermée <1ms
+         Priorité 1 — préemption absolue -->
+    <slice id="2" name="URLLC" sst="2">
+        <resourceAllocation>
+            <minRbs>8</minRbs>
+            <maxRbs>20</maxRbs>
+            <defaultRbs>12</defaultRbs>  <!-- 48% de 25 RBs -->
+            <priority>1</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>20</maxLatency>            <!-- ms (end-to-end simulé) -->
+            <minThroughput>0.5</minThroughput>     <!-- Mbps par automate -->
+            <maxPacketLoss>0.001</maxPacketLoss>   <!-- 99.999% fiabilité -->
+        </qos>
+    </slice>
+
+    <!-- mMTC — IoT industriel dense
+         Capteurs température/pression/vibration, SCADA, monitoring
+         prédictif, metering, tracking actifs industriels
+         Priorité 2 — cède aux urgences URLLC -->
+    <slice id="3" name="mMTC" sst="3">
+        <resourceAllocation>
+            <minRbs>4</minRbs>
+            <maxRbs>12</maxRbs>
+            <defaultRbs>7</defaultRbs>   <!-- 28% de 25 RBs -->
+            <priority>2</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>8.8</maxLatency>
+            <minThroughput>0.0003</minThroughput>
+            <maxPacketLoss>0.01</maxPacketLoss>
+        </qos>
+    </slice>
+
+    <!-- eMBB — supervision et interfaces opérateur
+         Caméras de supervision HD, interfaces HMI opérateur,
+         digital twin visualisation, AR/VR maintenance
+         Priorité 3 — préemptable en cas de crise industrielle -->
+    <slice id="1" name="eMBB" sst="1">
+        <resourceAllocation>
+            <minRbs>4</minRbs>
+            <maxRbs>14</maxRbs>
+            <defaultRbs>6</defaultRbs>   <!-- 24% de 25 RBs -->
+            <priority>3</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>50</maxLatency>
+            <minThroughput>10</minThroughput>
+            <maxPacketLoss>0.01</maxPacketLoss>
+        </qos>
+    </slice>
+
+</sliceConfig>

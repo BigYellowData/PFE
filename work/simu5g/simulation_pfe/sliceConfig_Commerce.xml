@@ -1,0 +1,70 @@
+<!-- ============================================================
+     sliceConfig_Commerce.xml
+     Allocation RBs pour gNB_Commerce (Urban Micro StreetCanyon)
+
+     35 RBs totaux (70 MHz, bande n78 3.5 GHz, numerologie μ=1)
+     Répartition eMBB-dominante : zone commerciale dense
+
+     Justification (3GPP TR 38.901 §7.2 UMi StreetCanyon) :
+       eMBB  60% — streaming, réseaux sociaux, affichage dynamique
+       URLLC 30% — paiements NFC, contrôle accès, livraisons robotisées
+       mMTC  10% — capteurs vitrine, tags NFC, affiches connectées
+
+     Pourquoi moins de RBs que la Macro ?
+       Cellule micro (ISD=150m) → moins d'UEs simultanés, mais débit/UE élevé
+       70 MHz suffisant pour la densité prévue (6 eMBB + 2 URLLC + 1 mMTC)
+     ============================================================ -->
+<sliceConfig>
+
+    <!-- eMBB — dominant en zone commerciale
+         Streaming boutiques, réseaux sociaux clients, WiFi-offload 5G
+         Priorité 2 -->
+    <slice id="1" name="eMBB" sst="1">
+        <resourceAllocation>
+            <minRbs>10</minRbs>
+            <maxRbs>28</maxRbs>
+            <defaultRbs>21</defaultRbs>  <!-- 60% de 35 RBs -->
+            <priority>2</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>50</maxLatency>
+            <minThroughput>10</minThroughput>
+            <maxPacketLoss>0.01</maxPacketLoss>
+        </qos>
+    </slice>
+
+    <!-- URLLC — paiements et contrôle d'accès
+         Terminaux de paiement (NFC), portiques contrôle, drones livraison
+         Priorité 1 — préemption possible sur eMBB -->
+    <slice id="2" name="URLLC" sst="2">
+        <resourceAllocation>
+            <minRbs>6</minRbs>
+            <maxRbs>18</maxRbs>
+            <defaultRbs>11</defaultRbs>  <!-- 31% de 35 RBs -->
+            <priority>1</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>20</maxLatency>
+            <minThroughput>0.5</minThroughput>
+            <maxPacketLoss>0.001</maxPacketLoss>
+        </qos>
+    </slice>
+
+    <!-- mMTC — faible présence commerciale
+         Capteurs de présence, tags NFC inventaire, affiches connectées
+         Priorité 3 — cède ses RBs à eMBB en cas de pic -->
+    <slice id="3" name="mMTC" sst="3">
+        <resourceAllocation>
+            <minRbs>2</minRbs>
+            <maxRbs>8</maxRbs>
+            <defaultRbs>3</defaultRbs>   <!-- 9% de 35 RBs -->
+            <priority>3</priority>
+        </resourceAllocation>
+        <qos>
+            <maxLatency>8.8</maxLatency>
+            <minThroughput>0.0003</minThroughput>
+            <maxPacketLoss>0.01</maxPacketLoss>
+        </qos>
+    </slice>
+
+</sliceConfig>
