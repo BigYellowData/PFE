@@ -21,9 +21,9 @@ work/simu5g/loss/resultat/
 metrics_live.csv
 rb_config.json
 
-# Modèles entraînés (volumineux)
-*.pt
-*.pkl
+# Modèles entraînés — suivis via Git LFS
+# *.pt
+# *.pkl
 
 # Poubelle
 _poubelle/
