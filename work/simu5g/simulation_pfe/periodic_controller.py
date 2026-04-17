@@ -77,7 +77,7 @@ def sigmoid(rho, k, rho_c):
 
 def obs_rho(df_live, gnb, stype):
     """Estime rho depuis le throughput observe (pas de LSTM)."""
-    sub = df_live[df_live['slice'] == stype].tail(5)
+    sub = df_live[(df_live['slice'] == stype) & (df_live['gnb'] == gnb)].tail(5)
     if sub.empty:
         return 0.1
     tp  = float(sub['throughput_mbps'].mean())

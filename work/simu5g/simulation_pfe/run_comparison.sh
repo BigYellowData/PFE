@@ -102,11 +102,11 @@ run_one_mode "baseline" ""
 
 # ── Run 2 : MILP periodique ───────────────────────────────────────────────────
 run_one_mode "periodic_milp" \
-    "python3 $SIM_DIR/periodic_controller.py --sim-dir $SIM_DIR --control-period 15"
+    "python3 -u $SIM_DIR/periodic_controller.py --sim-dir $SIM_DIR --control-period 15"
 
 # ── Run 3 : LSTM + MILP ───────────────────────────────────────────────────────
 run_one_mode "lstm_milp" \
-    "python3 $SIM_DIR/closed_loop_controller.py --sim-dir $SIM_DIR --control-period 15"
+    "python3 -u $SIM_DIR/closed_loop_controller.py --sim-dir $SIM_DIR --control-period 15"
 
 # ── Analyse comparative ───────────────────────────────────────────────────────
 echo ""

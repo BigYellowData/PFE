@@ -250,10 +250,10 @@ def engineer_features(series, window=ENG_WINDOW):
 def build_input_from_live(df_live, stype, gnb, scaler):
     """
     Build LSTM input from metrics_live.csv data.
-    df_live: last 30+ rows with columns [simtime_s, slice, avg_latency_ms, throughput_mbps, pkt_count]
+    df_live: rows with columns [simtime_s, gnb, slice, avg_latency_ms, throughput_mbps, pkt_count, pkt_loss_pct]
     Returns: tensor (1, INPUT_SEC, N_IN) or None if insufficient data
     """
-    sub = df_live[(df_live['slice'] == stype)].sort_values('simtime_s').tail(INPUT_SEC)
+    sub = df_live[(df_live['slice'] == stype) & (df_live['gnb'] == gnb)].sort_values('simtime_s').tail(INPUT_SEC)
     if len(sub) < INPUT_SEC:
         return None
 
@@ -261,17 +261,19 @@ def build_input_from_live(df_live, stype, gnb, scaler):
     # ['Slice_Throughput_Mbps', 'Slice_Latency_log1p', 'Slice_Packet_Loss_pct',
     #  'Slice_Jitter_log1p', 'Slice_Network_Load_pct']
     tp  = sub['throughput_mbps'].values
-    lat = np.log1p(sub['avg_latency_ms'].clip(0, 600_000))  # log1p transform
-    pkt = sub['pkt_count'].values.astype(float)
-    # pkt_count as proxy for packet loss (0 = no packets = high loss) and load
-    loss = np.where(pkt > 0, 0.0, 1.0)       # rough proxy
-    load = np.clip(tp / max(R_MAX[gnb] * R_PER_RB[gnb][stype], 1e-6), 0, 2)
-    jitter = np.zeros_like(tp)                # not available from aggregate
+    lat = np.log1p(sub['avg_latency_ms'].clip(0, 600_000).values)  # log1p transform
+    # Use pkt_loss_pct directly if available, else fall back to pkt_count proxy
+    if 'pkt_loss_pct' in sub.columns:
+        loss = sub['pkt_loss_pct'].values.astype(float)
+    else:
+        pkt  = sub['pkt_count'].values.astype(float)
+        loss = np.where(pkt > 0, 0.0, 1.0)
+    load   = np.clip(tp / max(R_MAX[gnb] * R_PER_RB[gnb][stype], 1e-6), 0, 2)
+    jitter = np.zeros_like(tp)                # not available from aggregate metrics
 
-    raw = np.stack([tp, lat, loss, jitter, load], axis=1).astype(np.float32)
+    raw  = np.stack([tp, lat, loss, jitter, load], axis=1).astype(np.float32)
     feat = engineer_features(raw)             # (T, 15)
 
-    # Normalize using source scaler (scalers dict has 'src' and 'tgt' keys)
     src_scaler = scaler['src'] if isinstance(scaler, dict) else scaler
     feat_scaled = src_scaler.transform(feat)
     x = torch.tensor(feat_scaled[np.newaxis], dtype=torch.float32).to(DEVICE)
@@ -358,7 +360,7 @@ def predict_rho(df_live, gnb, stype):
     key = (stype, gnb)
 
     if key not in models or key not in scalers:
-        sub = df_live[df_live['slice'] == stype].tail(1)
+        sub = df_live[(df_live['slice'] == stype) & (df_live['gnb'] == gnb)].tail(1)
         if sub.empty:
             return 0.1, {'mode': 'no_model', 'rho': 0.1}
         tp = float(sub['throughput_mbps'].iloc[0])
@@ -368,14 +370,14 @@ def predict_rho(df_live, gnb, stype):
 
     x = build_input_from_live(df_live, stype, gnb, scalers[key])
     if x is None:
-        sub = df_live[df_live['slice'] == stype].tail(1)
+        sub = df_live[(df_live['slice'] == stype) & (df_live['gnb'] == gnb)].tail(1)
         if sub.empty:
             return 0.1, {'mode': 'fallback_nodata', 'rho': 0.1}
         tp = float(sub['throughput_mbps'].iloc[0])
         lat = float(sub['avg_latency_ms'].iloc[0])
         cap = DEFAULT_RBS[gnb][stype] * R_PER_RB[gnb][stype]
         rho = float(np.clip(tp / max(cap, 1e-6), 0.0, 2.0))
-        rows_available = len(df_live[df_live['slice'] == stype])
+        rows_available = len(df_live[(df_live['slice'] == stype) & (df_live['gnb'] == gnb)])
         return rho, {
             'mode': 'fallback_warmup',
             'rho': rho,
@@ -403,10 +405,10 @@ def predict_rho(df_live, gnb, stype):
     # If the LSTM was trained on a different operating regime (e.g. unbounded
     # MAC buffer → high latency), its latency predictions will be far off.
     # Detect this: if pred_lat >> obs_lat, trust the observed latency instead.
-    obs_sub = df_live[df_live['slice'] == stype].tail(5)
+    obs_sub = df_live[(df_live['slice'] == stype) & (df_live['gnb'] == gnb)].tail(5)
     obs_lat_ms   = float(obs_sub['avg_latency_ms'].mean()) if not obs_sub.empty else None
     shift_detected = False
-    if obs_lat_ms is not None and lat_pred > obs_lat_ms * 10:
+    if obs_lat_ms is not None and lat_pred > obs_lat_ms * 5:
         # Significant distribution shift — use observed latency for p_viol
         shift_detected = True
         p_viol = float(obs_lat_ms > SLA[stype]['L_max_ms'])
