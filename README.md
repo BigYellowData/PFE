@@ -7,14 +7,16 @@ Optimisation dynamique des ressources radio en réseau 5G hétérogène par pré
 
 ## Résultats
 
-| Approche | Réduction coût F(R) | Fenêtres améliorées |
-|---|---|---|
-| Allocation fixe (baseline) | 0% — référence | — |
-| MILP seul (réactif) | ~20–25% | — |
-| **LSTM + MILP (boucle fermée)** | **41.3%** | **98.3%** |
-| LSTM + MILP + online learning | 51.8% | — |
+| Approche | Réduction coût F(R) |
+|---|---|
+| Allocation fixe (baseline) | 0 % — référence |
+| MILP seul oracle (nb02) | 20,7 % |
+| **LSTM + MILP boucle fermée (nb03)** | **39,7 %** |
+| LSTM + MILP + online learning (nb04) | 37,2 % global / **40,8 % régime établi** |
 
-Évalué sur **255 812 fenêtres** issues de **26 scénarios** (12 réels + 14 synthétiques), 3 gNBs hétérogènes.
+Évalué sur **762 fenêtres de test** (split 20 % final) issues de **26 scénarios** (12 réels + 14 synthétiques), 3 gNBs hétérogènes.
+
+**Validation live Simu5G :** LSTM+MILP réduit les violations SLA URLLC de **−5,6 pp** (32,4 % → 26,9 %) vs 0 pp pour le MILP réactif seul.
 
 ---
 
@@ -29,34 +31,31 @@ PFE-NetworkSlicing/
 │   │   ├── 00_eda_dataset.ipynb           # Analyse exploratoire du dataset
 │   │   ├── 01_lstm_retrain.ipynb          # Entraînement LSTM Seq2Seq + FedAvg LoGO
 │   │   ├── 02_rb_optimization_F.ipynb     # Calibration sigmoid + MILP offline
-│   │   ├── 03_closed_loop.ipynb           # Boucle fermée LSTM+MILP (résultats 41.3%)
-│   │   ├── 04_closed_loop_online.ipynb    # Boucle fermée + apprentissage continu (51.8%)
-│   │   ├── all_simu5g.csv                 # Dataset brut (315 892 lignes, 20 scénarios)
-│   │   ├── all_simu5g_trans.csv           # Dataset enrichi (+ scénarios de transition)
+│   │   ├── 03_closed_loop.ipynb           # Boucle fermée LSTM+MILP (39,7 %)
+│   │   ├── 04_closed_loop_online.ipynb    # Boucle fermée + online learning (40,8 % régime)
+│   │   ├── all_simu5g_trans.csv           # Dataset d'entraînement (255 812 lignes, 26 scénarios)
 │   │   ├── create_rampup.py               # Génération scénarios de transition synthétiques
-│   │   ├── models_lstm_v3/                # Modèles LSTM finaux (6 fichiers)
-│   │   │   ├── model_final_{eMBB,URLLC,mMTC}.pt
-│   │   │   └── scalers_final_{eMBB,URLLC,mMTC}.pkl
-│   │   ├── output/                        # CSV résultats + figures
-│   │   └── resultat/                      # Fichiers .vec/.sca/.vci Simu5G
+│   │   └── models_lstm_v3/                # Modèles LSTM finaux (Git LFS)
+│   │       ├── model_final_{eMBB,URLLC,mMTC}.pt
+│   │       └── scalers_final_{eMBB,URLLC,mMTC}.pkl
 │   │
-│   ├── simulation_pfe/                    # Boucle fermée temps réel
-│   │   ├── omnetpp_hetnet.ini             # Config OMNeT++ (20 scénarios)
+│   ├── simulation_pfe/                    # Boucle fermée temps réel (Simu5G)
+│   │   ├── omnetpp_hetnet.ini             # Config OMNeT++ (scénarios dont ControllerDemo_v2)
 │   │   ├── HetNetSlicing.ned              # Topologie réseau hétérogène
 │   │   ├── network_config.xml             # Config réseau IP/5G
 │   │   ├── sliceConfig*.xml               # Allocation RBs par gNB
 │   │   ├── closed_loop_controller.py      # Contrôleur LSTM + MILP temps réel
-│   │   ├── periodic_controller.py         # Contrôleur MILP seul (comparaison)
+│   │   ├── periodic_controller.py         # Contrôleur MILP réactif (comparaison)
 │   │   ├── compare_results.py             # Analyse comparative des 3 modes
-│   │   ├── run_comparison.sh              # Lance les 3 modes (baseline/MILP/LSTM+MILP)
-│   │   ├── run_all_sims.sh                # Lance tous les scénarios
-│   │   └── comparison_results/            # Résultats des runs de comparaison live
+│   │   └── run_comparison.sh              # Lance baseline / MILP / LSTM+MILP
 │   │
-│   ├── extract_simu5g_metrics.py          # Extraction .vec/.sca → CSV
-│   └── GUIDE.md                           # Guide d'installation Simu5G
+│   ├── output/                            # Graphiques et CSV des notebooks 03/04
+│   ├── Simu5G/                            # Submodule Simu5G modifié
+│   │   └── src/simu5g/control/            # SliceController + SliceResourceManager (custom)
+│   └── extract_simu5g_metrics.py          # Extraction .vec/.sca → CSV (si re-simulation)
 │
+├── TECHNICAL_OVERVIEW.md                  # Documentation technique complète
 ├── requirements.txt
-├── docker-compose.yml                     # Environnement JupyterLab
 └── README.md
 ```
 
@@ -66,15 +65,15 @@ PFE-NetworkSlicing/
 
 Un réseau 5G partage ses ressources radio (Resource Blocks) entre 3 types de slices :
 
-| Slice | Usage | Latence max | Débit min |
+| Slice | Usage | Latence max | Pkt loss max |
 |---|---|---|---|
-| **eMBB** | Streaming, vidéo HD | 60 ms | 10 Mbps |
-| **URLLC** | Robotique, chirurgie à distance | 25 ms | 0.5 Mbps |
-| **mMTC** | Capteurs IoT | 300 ms | — |
+| **eMBB** | Streaming, vidéo HD | 60 ms | 1 % |
+| **URLLC** | Robotique, chirurgie à distance | 25 ms | 0,001 % |
+| **mMTC** | Capteurs IoT | 300 ms | 1 % |
 
-Le réseau simule **3 gNBs hétérogènes** (Macro UMa, Commerce UMi, Industrie UMi) avec des budgets RB différents (50 / 35 / 25 RBs).
+Le réseau simule **3 gNBs hétérogènes** (Macro 50 RBs, Commerce 35 RBs, Industrie 25 RBs).
 
-Avec une allocation fixe par défaut : **100% de violations SLA pour eMBB, 68% pour URLLC**.
+Avec une allocation fixe par défaut : **48 % de violations SLA pour eMBB, 61 % pour URLLC**.
 
 ---
 
@@ -82,37 +81,34 @@ Avec une allocation fixe par défaut : **100% de violations SLA pour eMBB, 68% p
 
 ### 1. Collecte des données — Simu5G
 
-Les données proviennent du simulateur **Simu5G** (OMNeT++ + INET), qui mesure latence, débit, jitter et perte de paquets end-to-end pour chaque slice. **12 scénarios réels** ont été simulés (NormalLoad, GlobalSaturation, FifaWorldCup_Commerce, HetLoad_Asymmetric_A/B/C, KddiOutage_Storm, LowTrafficNight, ModerateLoad_eMBB/URLLC, OverloadeMBB_Commerce, SLABoundary_URLLC) → `all_simu5g.csv` (183 812 lignes).
-
-Un script de génération (`create_rampup.py`) enrichit ce dataset avec **14 scénarios de transition synthétiques** par interpolation sigmoïde entre scénarios LOW et HIGH → `all_simu5g_trans.csv` (255 812 lignes, 26 scénarios). C'est ce fichier qui est utilisé pour l'entraînement et l'évaluation.
+Les données proviennent du simulateur **Simu5G** (OMNeT++ + INET), qui mesure latence, débit et perte de paquets end-to-end pour chaque slice. 12 scénarios réels + 14 scénarios de transition synthétiques (générés par `create_rampup.py`) → `all_simu5g_trans.csv` (**255 812 lignes, 26 scénarios**). C'est ce fichier qui est utilisé pour l'entraînement et l'évaluation.
 
 ### 2. Modèle LSTM — Prédiction de charge
 
 Architecture **Seq2Seq avec attention de Bahdanau** :
 - Entrée : 60 secondes × 15 features (throughput, latence, jitter, load, loss + dérivées)
-- Sortie : prédiction sur les 15 prochaines secondes (throughput, latence log1p, loss)
-- Encodeur : LSTM bidirectionnel, 3 couches, 256 hidden
+- Sortie : prédiction sur les 15 prochaines secondes (throughput, latence, loss)
+- Encodeur : BiLSTM 3 couches, hidden=256
 - Décodeur : LSTM + Bahdanau Attention
 
-Entraîné avec **FedAvg LoGO** (Leave-one-gNB-out) + **FedProx** (μ=0.01) : chaque gNB entraîne un modèle local, les poids sont agrégés pour produire un modèle global par slice.
+Entraîné avec **FedAvg LoGO** (Leave-one-gNB-out) + **FedProx** (μ=0,01).
 
 ### 3. Optimisation MILP — Allocation des RBs
 
 Le MILP minimise la fonction de coût **F(R)** :
 
 ```
-F(R) = Σ_s [ 0.6 × pénalité_débit(s) + 0.4 × p_loss(s) ]
+F(R) = Σ_s [ 0.6 × pénalité_débit(s) + 0.4 × p_loss(ρ_s) ]
 ```
 
-Où `p_loss(ρ)` est une sigmoïde calibrée sur les données Simu5G, et `ρ` est le taux de charge prédit par le LSTM.
-
-Contrainte : `Σ_s R_s = R_MAX` (budget total de l'antenne).
+Où `p_loss(ρ)` est une sigmoïde calibrée par régression sur les données Simu5G.  
+Résolu par `scipy.optimize.milp` en < 5 ms par fenêtre.
 
 ### 4. Boucle fermée
 
 ```
-t=0s  : mesure des KPIs → LSTM prédit ρ à t+15s
-t=0s  : MILP calcule R_optimal pour t+15s  (<10ms)
+t=0s  : observation KPIs → LSTM prédit ρ à t+15s
+t=0s  : MILP calcule R_optimal pour ρ prédit  (<5ms)
 t=15s : nouvelle allocation appliquée avant la surcharge
 ```
 
@@ -124,30 +120,38 @@ t=15s : nouvelle allocation appliquée avant la surcharge
 
 | gNB | Gain moyen F(R) |
 |---|---|
-| Macro | +38.6% |
-| Commerce | +15.2% |
-| Industrie | +62.3% |
-| **Global** | **+41.3%** |
+| Macro | 35,0 % |
+| Commerce | 14,9 % |
+| Industrie | **62,1 %** |
+| **Global** | **39,7 %** |
 
-### Comparaison des approches (notebook 02 vs 03)
+### Comparaison des approches
 
-| | MILP seul | LSTM + MILP |
+| | MILP seul oracle | LSTM + MILP |
 |---|---|---|
-| Quand il agit | Après la surcharge | Avant la surcharge |
-| Gain moyen | ~20–25% | **41.3%** |
-| Apport du LSTM | — | +17 points |
+| Quand il agit | Sur ρ observé | Sur ρ prédit (+15s) |
+| Gain moyen | 20,7 % | **39,7 %** |
+| Apport du LSTM | — | +19 points |
 
-Le LSTM **double l'efficacité** du MILP grâce à l'anticipation.
+### Online learning (notebook 04)
 
-### Apprentissage continu (notebook 04)
+| | Première moitié (warmup) | Deuxième moitié (régime) |
+|---|---|---|
+| Gain F(R) | 33,6 % | **40,8 %** |
+| MAE prédiction | 0,0342 | 0,0272 |
+| Train loss | 0,207 | 0,159 |
 
-| Métrique | Début | Fin | Gain |
-|---|---|---|---|
-| MAE prédiction | 0.050 | 0.017 | −66% |
-| Gain F(R) | 55.6% | 48.1% | — |
-| Train loss | 244 | 62 | −75% |
+Train loss total : 0,183 → 0,006 (×29 de réduction). FedAvg toutes les 5 fenêtres pour eMBB.
 
-FedAvg toutes les 5 fenêtres entre gNBs. 1272 updates effectués. **Gain global : 51.8%.**
+### Validation live Simu5G (ControllerDemo_v2, t=300s)
+
+| Mode | URLLC Viol% | Gain vs baseline |
+|---|---|---|
+| Baseline (allocation fixe) | 32,4 % | — |
+| MILP périodique (réactif) | 32,4 % | +0,0 pp |
+| **LSTM + MILP adaptatif** | **26,9 %** | **−5,6 pp** |
+
+Le MILP réactif échoue car les violations URLLC (SLA : pkt_loss < 0,001 %) sont causées par des micro-rafales. Le LSTM anticipe 15 s à l'avance et pré-alloue avant la rafale.
 
 ---
 
@@ -158,7 +162,7 @@ FedAvg toutes les 5 fenêtres entre gNBs. 1272 updates effectués. **Gain global
 ```
 Python 3.10+
 PyTorch 2.0+ (CUDA recommandé)
-OMNeT++ 6.0 + INET 4.6 + Simu5G 1.4.2  (pour les simulations)
+OMNeT++ 6.0 + INET 4.6 + Simu5G 1.4.2  (pour la validation live uniquement)
 ```
 
 ### Dépendances Python
@@ -172,41 +176,29 @@ pip install -r requirements.txt
 ```bash
 cd work/simu5g/loss
 
-# 1. Exploration des données
-jupyter notebook 00_eda_dataset.ipynb
-
-# 2. Entraînement LSTM (nécessite GPU, ~2-4h)
-jupyter notebook 01_lstm_retrain.ipynb
-
-# 3. Optimisation MILP + calibration
-jupyter notebook 02_rb_optimization_F.ipynb
-
-# 4. Boucle fermée statique → résultat 41.3%
-jupyter notebook 03_closed_loop.ipynb
-
-# 5. Boucle fermée avec apprentissage continu → résultat 51.8%
-jupyter notebook 04_closed_loop_online.ipynb
+jupyter notebook 00_eda_dataset.ipynb        # Exploration des données
+jupyter notebook 01_lstm_retrain.ipynb       # Entraînement LSTM (~2-4h GPU)
+jupyter notebook 02_rb_optimization_F.ipynb  # MILP seul + calibration
+jupyter notebook 03_closed_loop.ipynb        # Boucle fermée → 39,7 %
+jupyter notebook 04_closed_loop_online.ipynb # Online learning → 40,8 % régime
 ```
 
-### Lancer la comparaison live (Simu5G requis)
+### Validation live (Simu5G requis)
 
 ```bash
 cd work/simu5g/simulation_pfe
 
-# 3 modes en parallèle : baseline / MILP / LSTM+MILP
-./run_comparison.sh GlobalSaturation 0
+# Lance les 3 modes : baseline / MILP périodique / LSTM+MILP
+./run_comparison.sh ControllerDemo_v2 0
 
-# Analyser les résultats
-python compare_results.py comparison_results/GlobalSaturation_seed0
+# Les résultats s'affichent en fin de run
 ```
 
-### Extraction des métriques Simu5G
+---
 
-```bash
-python work/simu5g/extract_simu5g_metrics.py \
-    --results work/simu5g/loss/resultat \
-    --output  work/simu5g/loss/all_simu5g.csv
-```
+## Documentation
+
+Le fichier [`TECHNICAL_OVERVIEW.md`](TECHNICAL_OVERVIEW.md) documente en détail chaque notebook, les choix d'architecture, les résultats par gNB et la validation live.
 
 ---
 
