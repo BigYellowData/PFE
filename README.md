@@ -198,7 +198,7 @@ cd work/simu5g/simulation_pfe
 
 ## Documentation
 
-Le fichier [`TECHNICAL_OVERVIEW.md`](TECHNICAL_OVERVIEW.md) documente en détail chaque notebook, les choix d'architecture, les résultats par gNB et la validation live.
+Le fichier [`Rapport_PFE.pdf`](Rapport_PFE.pdf) documente en détail chaque notebook, les choix d'architecture, les résultats par gNB et la validation live.
 
 ---
 
