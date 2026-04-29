@@ -15,10 +15,10 @@ data/
 *.parquet
 
 # Résultats bruts Simu5G (trop volumineux — conservés en local)
-work/simu5g/loss/resultat/
+work/simu5g/notebooks/resultat/
 work/simu5g/simulation_pfe/comparison_results/
-work/simu5g/loss/eda_output/
-work/simu5g/loss/output_milp/
+work/simu5g/notebooks/eda_output/
+work/simu5g/notebooks/output_milp/
 
 # Fichiers live (écrits à chaque run)
 metrics_live.csv
