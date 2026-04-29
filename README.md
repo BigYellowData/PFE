@@ -27,7 +27,7 @@ PFE-NetworkSlicing/
 │
 ├── work/simu5g/
 │   │
-│   ├── loss/                              # Pipeline principal
+│   ├── notebooks                              # Pipeline principal
 │   │   ├── 00_eda_dataset.ipynb           # Analyse exploratoire du dataset
 │   │   ├── 01_lstm_retrain.ipynb          # Entraînement LSTM Seq2Seq + FedAvg LoGO
 │   │   ├── 02_rb_optimization_F.ipynb     # Calibration sigmoid + MILP offline
@@ -174,7 +174,7 @@ pip install -r requirements.txt
 ### Reproduire les résultats offline (notebooks)
 
 ```bash
-cd work/simu5g/loss
+cd work/simu5g/notebooks
 
 jupyter notebook 00_eda_dataset.ipynb        # Exploration des données
 jupyter notebook 01_lstm_retrain.ipynb       # Entraînement LSTM (~2-4h GPU)
