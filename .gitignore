@@ -43,3 +43,7 @@ _poubelle/
 
 # Rapports LaTeX (brouillons locaux)
 *.tex
+
+# Docs techniques générés (brouillons locaux)
+RAPPORT_TECHNIQUE.md
+TECHNICAL_OVERVIEW.md
