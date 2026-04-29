@@ -40,3 +40,6 @@ _poubelle/
 
 # Claude
 .claude/
+
+# Rapports LaTeX (brouillons locaux)
+*.tex
